@@ -32,8 +32,11 @@ export default function HinomadMain() {
 
   const t = {
     KO: {
-      // 타이틀은 영어 유지 (디자인)
-      // 설명은 한국어
+      // 굵기 분리 제거 -> 통문장으로 복구
+      slogan_1: "Perceive the Essence.",
+      slogan_2: "Inspire the Strategy.",
+      slogan_3: "Construct the Future.",
+      
       desc_intro: "We are a ",
       desc_bold: "Strategic Digital Consultancy.",
       desc: "우리는 단순한 대행이 아닙니다. 치밀한 기획과 데이터 로직, 정교한 엔지니어링을 결합하여 비즈니스의 성장을 설계하는 전략적 파트너입니다.",
@@ -53,6 +56,10 @@ export default function HinomadMain() {
       footer_desc: "Strategic Digital Consultancy.\n서울을 기반으로, 전 세계와 일합니다."
     },
     EN: {
+      slogan_1: "Perceive the Essence.",
+      slogan_2: "Inspire the Strategy.",
+      slogan_3: "Construct the Future.",
+      
       desc_intro: "We are a ",
       desc_bold: "Strategic Digital Consultancy.",
       desc: "We are not just an agency. We architect growth through rigorous planning, data logic, and precise engineering as your strategic partner.",
@@ -113,21 +120,18 @@ export default function HinomadMain() {
         </div>
       )}
 
-      {/* 2. Hero Section */}
+      {/* 2. Hero Section (디자인 복구: 굵기 통일 + 색상 단계) */}
       <header className="relative pt-24 pb-20 md:pt-60 md:pb-40 px-6 border-b border-black">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-5xl">
-            {/* 타이틀 수정: 3단계 명암 복구 + 첫 단어만 Extra Bold */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-tight mb-12 break-keep">
-              <span className="block text-gray-400">
-                <span className="font-extrabold">Perceive</span> <span className="font-medium">the Essence.</span>
-              </span>
-              <span className="block text-gray-600">
-                <span className="font-extrabold">Inspire</span> <span className="font-medium">the Strategy.</span>
-              </span>
-              <span className="block text-black">
-                <span className="font-extrabold">Construct</span> <span className="font-medium">the Future.</span>
-              </span>
+            {/* 복구 완료:
+              - font-black, font-extrabold 제거 -> font-bold로 통일
+              - 색상 단계: Gray-400 -> Gray-600 -> Black 유지
+            */}
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight mb-12 break-keep">
+              <span className="block text-gray-400">{text.slogan_1}</span>
+              <span className="block text-gray-600">{text.slogan_2}</span>
+              <span className="block text-black">{text.slogan_3}</span>
             </h1>
             
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-l-2 border-black pl-6 md:pl-8">
