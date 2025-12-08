@@ -13,6 +13,9 @@ export default function HinomadMain() {
   const [formStatus, setFormStatus] = useState<'IDLE' | 'SUBMITTING' | 'SUCCESS'>('IDLE');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
+  
+  // ✅ [추가됨] 에러 메시지 상태 관리
+  const [formErrors, setFormErrors] = useState({ topic: false, budget: false });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,7 +38,6 @@ export default function HinomadMain() {
     return () => observer.disconnect();
   }, []);
 
-  // 스무스 스크롤 (페이지 내 이동)
   const scrollToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -48,23 +50,66 @@ export default function HinomadMain() {
     }
   };
 
-  // 문의 폼 제출
+  // ✅ [추가됨] 버튼 클릭 시 에러 해제 함수
+  const handleTopicSelect = (topic: string) => {
+    setSelectedTopic(topic);
+    setFormErrors(prev => ({ ...prev, topic: false })); // 에러 메시지 끄기
+  };
+
+  const handleBudgetSelect = (budget: string) => {
+    setSelectedBudget(budget);
+    setFormErrors(prev => ({ ...prev, budget: false })); // 에러 메시지 끄기
+  };
+
+  // 폼 제출 핸들러
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedTopic || !selectedBudget) {
-      alert(lang === 'KO' ? "주제와 예산을 선택해 주세요." : "Please select a topic and budget range.");
+    
+    // ✅ [수정됨] 알림창 대신 에러 상태(Text) 표시
+    let hasError = false;
+    const newErrors = { topic: false, budget: false };
+
+    if (!selectedTopic) {
+      newErrors.topic = true;
+      hasError = true;
+    }
+    if (!selectedBudget) {
+      newErrors.budget = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setFormErrors(newErrors);
+      // 에러가 있으면 여기서 멈춤 (전송 안 함)
+      return; 
+    }
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const message = formData.get('message') as string;
+
+    // 이메일 유효성 검사 (기존 유지)
+    // HTML5 'required'가 1차로 막아주지만, 정규식으로 한 번 더 체크
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert(lang === 'KO' ? "올바른 이메일 주소를 입력해 주세요." : "Please enter a valid email address.");
       return;
     }
-    setFormStatus('SUBMITTING');
+
+    // 내용 길이 검사
+    if (message.length < 10) {
+      alert(lang === 'KO' ? "프로젝트 상세 내용은 최소 10자 이상 적어주세요." : "Please write at least 10 characters for project details.");
+      return;
+    }
     
-    // API 연결 부분 (EmailJS 또는 Route API)
-    const formData = new FormData(e.currentTarget);
+    setFormStatus('SUBMITTING');
+
     const data = {
       topic: selectedTopic,
       budget: selectedBudget,
       name: formData.get('name'),
-      email: formData.get('email'),
-      message: formData.get('message'),
+      email: email,
+      message: message,
     };
 
     try {
@@ -77,18 +122,17 @@ export default function HinomadMain() {
       if (response.ok) {
         setFormStatus('SUCCESS');
       } else {
-        // API가 없을 경우를 대비해 성공으로 처리 (테스트용)
-        setFormStatus('SUCCESS'); 
+        throw new Error('전송 실패');
       }
     } catch (error) {
       console.error(error);
-      setFormStatus('SUCCESS'); // 테스트 환경에서는 성공 처리
+      alert(lang === 'KO' ? "전송 중 오류가 발생했습니다." : "An error occurred while sending.");
+      setFormStatus('IDLE');
     }
   };
 
   const t = {
     KO: {
-      // ✅ [수정됨] 슬로건을 '강조(Main)'와 '일반(Sub)'으로 분리
       slogan_1_main: "Perceive", slogan_1_sub: " the Essence.",
       slogan_2_main: "Inspire", slogan_2_sub: " the Strategy.",
       slogan_3_main: "Construct", slogan_3_sub: " the Future.",
@@ -114,7 +158,7 @@ export default function HinomadMain() {
       explore: "Explore",
       view_all_work: "View All Cases",
       view_all_insight: "View All Insights",
-      footer_desc: "Strategic Digital Consultancy.\n서울을 기반으로, 전 세계와 일합니다.",
+      footer_desc: "Strategic Digital Consultancy.\nBased in Seoul, working globally.",
 
       contact_q1: "1. 어떤 서비스가 필요하신가요?",
       contact_topics: ['전략 컨설팅', '브랜딩', '웹/앱 개발', 'WEB3', '메타버스'],
@@ -123,18 +167,23 @@ export default function HinomadMain() {
       contact_q3: "3. 귀하의 정보를 알려주세요.",
       label_name: "이름",
       label_email: "이메일",
-      label_detail: "프로젝트 상세 내용 (선택사항)",
+      label_detail: "프로젝트 상세 내용 (10자 이상)",
       ph_name: "홍길동",
       ph_email: "name@company.com",
       ph_detail: "프로젝트의 목표나 현재 고민을 간단히 적어주세요...",
-      btn_submit: "제안서 보내기",
+      
+      btn_submit: "문의하기", 
       btn_sending: "전송 중...",
+      
       msg_success_title: "문의가 접수되었습니다.",
       msg_success_desc: "작성해 주셔서 감사합니다. 내용을 검토한 후 24시간 이내에 담당자가 연락드리겠습니다.",
-      btn_retry: "다른 문의 보내기"
+      btn_retry: "다른 문의 보내기",
+      
+      // ✅ 에러 메시지 텍스트
+      err_topic: "서비스 항목을 선택해 주세요.",
+      err_budget: "예산 규모를 선택해 주세요."
     },
     EN: {
-      // ✅ [수정됨] 영어 버전도 동일하게 분리
       slogan_1_main: "Perceive", slogan_1_sub: " the Essence.",
       slogan_2_main: "Inspire", slogan_2_sub: " the Strategy.",
       slogan_3_main: "Construct", slogan_3_sub: " the Future.",
@@ -169,15 +218,20 @@ export default function HinomadMain() {
       contact_q3: "3. Tell us about yourself.",
       label_name: "Name",
       label_email: "Email",
-      label_detail: "Project Details (Optional)",
+      label_detail: "Project Details (Min 10 chars)",
       ph_name: "John Doe",
       ph_email: "john@company.com",
       ph_detail: "Briefly describe your project goals...",
-      btn_submit: "Send Request",
+      
+      btn_submit: "Send Inquiry",
       btn_sending: "Sending...",
+      
       msg_success_title: "Request Received.",
       msg_success_desc: "Thank you for your inquiry. We will analyze your request and get back to you within 24 hours.",
-      btn_retry: "Send another request"
+      btn_retry: "Send another request",
+
+      err_topic: "Please select a service topic.",
+      err_budget: "Please select a budget range."
     }
   };
 
@@ -227,11 +281,10 @@ export default function HinomadMain() {
         </div>
       )}
 
-     {/* 2. Hero Section */}
-     <header className="relative pt-24 pb-20 md:pt-60 md:pb-40 px-6 border-b border-black">
+      {/* 2. Hero Section */}
+      <header className="relative pt-24 pb-20 md:pt-60 md:pb-40 px-6 border-b border-black">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-5xl">
-            {/* ✅ [수정됨] 굵기 차이 적용 (Main: font-bold / Sub: font-medium) */}
             <h1 className="text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-tight mb-12 break-keep">
               <span className="block text-gray-400">
                 <span className="font-bold">{text.slogan_1_main}</span>
@@ -246,7 +299,6 @@ export default function HinomadMain() {
                 <span className="font-medium">{text.slogan_3_sub}</span>
               </span>
             </h1>
-            
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-l-2 border-black pl-6 md:pl-8">
               <p className="text-lg md:text-xl text-gray-500 max-w-xl font-medium leading-relaxed break-keep">
                 {text.desc_intro}<span className="text-black font-bold">{text.desc_bold}</span><br/>
@@ -268,7 +320,7 @@ export default function HinomadMain() {
             <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{text.sec_service}</span>
           </div>
           <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* Service Cards ... (동일) */}
+            {/* Card 1 */}
             <div data-index="0" className={`service-card group p-10 md:p-12 transition-all duration-500 cursor-pointer min-h-[400px] flex flex-col justify-between ${activeServiceCard === 0 ? 'bg-black text-white md:bg-white md:text-black' : 'bg-white text-black'} md:hover:bg-black md:hover:text-white`}>
               <div>
                 <div className={`w-12 h-12 border rounded-full flex items-center justify-center mb-8 text-2xl ${activeServiceCard === 0 ? 'border-white/30 text-white md:border-gray-200 md:text-black' : 'border-gray-200 text-black'} md:group-hover:border-white/30 md:group-hover:text-white`}>⚡</div>
@@ -279,6 +331,7 @@ export default function HinomadMain() {
                 <span className="text-xs font-bold uppercase tracking-widest">{text.explore}</span><span>↗</span>
               </div>
             </div>
+            {/* Card 2 */}
             <div data-index="1" className={`service-card group p-10 md:p-12 transition-all duration-500 cursor-pointer min-h-[400px] flex flex-col justify-between ${activeServiceCard === 1 ? 'bg-black text-white md:bg-white md:text-black' : 'bg-white text-black'} md:hover:bg-black md:hover:text-white`}>
               <div>
                 <div className={`w-12 h-12 border rounded-full flex items-center justify-center mb-8 text-2xl ${activeServiceCard === 1 ? 'border-white/30 text-white md:border-gray-200 md:text-black' : 'border-gray-200 text-black'} md:group-hover:border-white/30 md:group-hover:text-white`}>🧊</div>
@@ -289,6 +342,7 @@ export default function HinomadMain() {
                 <span className="text-xs font-bold uppercase tracking-widest">{text.explore}</span><span>↗</span>
               </div>
             </div>
+            {/* Card 3 */}
             <div data-index="2" className={`service-card group p-10 md:p-12 transition-all duration-500 cursor-pointer min-h-[400px] flex flex-col justify-between ${activeServiceCard === 2 ? 'bg-black text-white md:bg-white md:text-black' : 'bg-white text-black'} md:hover:bg-black md:hover:text-white`}>
               <div>
                 <div className={`w-12 h-12 border rounded-full flex items-center justify-center mb-8 text-2xl ${activeServiceCard === 2 ? 'border-white/30 text-white md:border-gray-200 md:text-black' : 'border-gray-200 text-black'} md:group-hover:border-white/30 md:group-hover:text-white`}>✨</div>
@@ -324,7 +378,6 @@ export default function HinomadMain() {
               ))}
             </div>
             <div className="mt-8 flex justify-end">
-              {/* placeholder link */}
               <a href="#" className="text-sm font-bold border-b border-black pb-1 hover:opacity-50">{text.view_all_work}</a>
             </div>
           </div>
@@ -358,7 +411,6 @@ export default function HinomadMain() {
               ))}
             </div>
             <div className="mt-12 flex justify-end">
-              {/* ✅ [수정 완료] /insight 페이지로 이동하도록 확실히 지정 */}
               <Link href="/insight" className="text-sm font-bold border-b border-black pb-1 hover:opacity-50">{text.view_all_insight}</Link>
             </div>
           </div>
@@ -382,18 +434,54 @@ export default function HinomadMain() {
                   <h3 className="text-2xl font-bold mb-6">{text.contact_q1}</h3>
                   <div className="flex flex-wrap gap-4">
                     {text.contact_topics.map((topic) => (
-                      <button key={topic} type="button" onClick={() => setSelectedTopic(topic)} className={`px-6 py-3 rounded-full border transition-all ${selectedTopic === topic ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-300 hover:border-black hover:text-black'}`}>{topic}</button>
+                      <button 
+                        key={topic} 
+                        type="button" 
+                        onClick={() => handleTopicSelect(topic)} 
+                        className={`px-6 py-3 rounded-full border transition-all ${
+                          selectedTopic === topic 
+                            ? 'bg-black text-white border-black' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-black hover:text-black'
+                        }`}
+                      >
+                        {topic}
+                      </button>
                     ))}
                   </div>
+                  {/* ✅ [추가됨] Topic 에러 메시지 */}
+                  {formErrors.topic && (
+                    <p className="text-red-600 text-sm mt-3 font-medium animate-pulse">
+                      {text.err_topic}
+                    </p>
+                  )}
                 </div>
+
                 <div>
                   <h3 className="text-2xl font-bold mb-6">{text.contact_q2}</h3>
                   <div className="flex flex-wrap gap-4">
                     {text.contact_budgets.map((budget) => (
-                      <button key={budget} type="button" onClick={() => setSelectedBudget(budget)} className={`px-6 py-3 rounded-full border transition-all ${selectedBudget === budget ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-300 hover:border-black hover:text-black'}`}>{budget}</button>
+                      <button 
+                        key={budget} 
+                        type="button" 
+                        onClick={() => handleBudgetSelect(budget)} 
+                        className={`px-6 py-3 rounded-full border transition-all ${
+                          selectedBudget === budget 
+                            ? 'bg-black text-white border-black' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-black hover:text-black'
+                        }`}
+                      >
+                        {budget}
+                      </button>
                     ))}
                   </div>
+                  {/* ✅ [추가됨] Budget 에러 메시지 */}
+                  {formErrors.budget && (
+                    <p className="text-red-600 text-sm mt-3 font-medium animate-pulse">
+                      {text.err_budget}
+                    </p>
+                  )}
                 </div>
+
                 <div>
                   <h3 className="text-2xl font-bold mb-6">{text.contact_q3}</h3>
                   <div className="grid md:grid-cols-2 gap-8 mb-8">
@@ -408,7 +496,7 @@ export default function HinomadMain() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-gray-400">{text.label_detail}</label>
-                    <textarea name="message" className="w-full border-b border-gray-300 py-3 focus:outline-none focus:border-black transition-colors bg-transparent min-h-[100px]" placeholder={text.ph_detail} />
+                    <textarea required minLength={10} name="message" className="w-full border-b border-gray-300 py-3 focus:outline-none focus:border-black transition-colors bg-transparent min-h-[100px]" placeholder={text.ph_detail} />
                   </div>
                 </div>
                 <button type="submit" disabled={formStatus === 'SUBMITTING'} className="bg-black text-white text-lg font-bold px-12 py-5 rounded-full hover:bg-gray-800 transition-all disabled:opacity-50">

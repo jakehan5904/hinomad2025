@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       from: 'Hinomad Web <onboarding@resend.dev>', 
       
       // 👇 메일 받을 대표님 주소를 여기에 적으세요!
-      to: ['info@hinomad.net'], 
+      to: ['maximilium@naver.com'], 
       
       subject: `[HINOMAD 문의] ${name}님의 프로젝트 제안`,
       html: `
