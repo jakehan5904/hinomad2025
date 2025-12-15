@@ -5,7 +5,9 @@ import "./globals.css";
 // ✅ [핵심 수정] 도메인 기준점을 잡아줍니다. (이게 있어야 이미지가 잘 나옵니다)
 export const metadata: Metadata = {
   metadataBase: new URL('https://hinomad.net'), 
-
+  alternates: {
+    canonical: "/", // "내가 원본(대장)이다" 라는 뜻
+  },
   title: "하이노마드 [HINOMAD]",
   description: "IT 컨설팅 하이노마드. 전략 수립, 브랜딩, 웹&앱, 메타버스 및 블록체인 플랫폼 개발까지 올인원솔루션 제공",
   keywords: [
