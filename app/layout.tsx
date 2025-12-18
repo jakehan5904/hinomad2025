@@ -1,8 +1,9 @@
+import React from "react";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 
-// 1. 뷰포트 설정 (Next.js 최신 표준에 맞춰 분리)
+// 1. 뷰포트 설정
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -11,23 +12,18 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-// 2. 메타데이터 설정 (캐노니컬 중복 제거 및 도메인 고정)
+// 2. 메타데이터 설정
 export const metadata: Metadata = {
   metadataBase: new URL('https://hinomad.net'), 
-  
-  // 'hinomad.net'이 원본임을 강력하게 선언
   alternates: {
     canonical: 'https://hinomad.net', 
   },
-
   title: "하이노마드 [HINOMAD]",
   description: "IT 컨설팅 하이노마드. 전략 수립, 브랜딩, 웹&앱, 메타버스 및 블록체인 플랫폼 개발까지 올인원솔루션 제공",
   keywords: [
     "하이노마드", "IT컨설팅", "브랜드전략", "메타버스개발", "블록체인개발", 
     "웹&앱개발", "플랫폼구축", "blockchain", "metavers"
   ],
-  
-  // 오픈 그래프
   openGraph: {
     type: "website",
     title: "하이노마드[HINOMAD]",
@@ -43,7 +39,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-
   icons: {
     icon: "/hinomad_ico.ico", 
     shortcut: "/hinomad_ico.ico",
@@ -51,14 +46,14 @@ export const metadata: Metadata = {
   },
 };
 
-// 3. 발급받으신 GA4 아이디 적용
+// 3. GA4 아이디 (이것만 있으면 방문자 집계 끝!)
 const GA_ID = 'G-55NCMKXVXL';
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="ko">
       <head>
@@ -67,19 +62,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans:400,700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased">
-        {/* 구글 태그 매니저 (GTM) - 노스크립트 */}
-        <noscript>
-          <iframe 
-            src="https://www.googletagmanager.com/ns.html?id=GTM-WNZ2GJV"
-            height="0" 
-            width="0" 
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
+        
+        {/* ❌ 삭제함: GTM <noscript> 태그 (불필요) */}
 
         {children}
 
-        {/* ✅ [업데이트 완료] GA4 스크립트 적용 */}
+        {/* ✅ GA4 스크립트 (이것만 남김) */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"
@@ -89,3 +77,13 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
+
+        {/* ❌ 삭제함: GTM 스크립트 (불필요) */}
+        
+      </body>
+    </html>
+  );
+}
